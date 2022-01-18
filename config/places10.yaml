@@ -1,0 +1,19 @@
+---
+epochs: 45
+batch_size: 32
+
+# divisor of net optput sizes. DEFAULT: 1.
+net_divisor: 1
+learning_rate: 0.001
+
+# number of workers in trainloader. DEFAULT: 4
+num_workers: 12
+
+img_dir_train: ./data/places10/train
+img_dir_val: ./data/places10/val
+img_dir_test: ./data/places10/test
+
+# a directory where colorized images are saved.
+img_out_dir: ./out/places10
+# a directory to which models are saved.
+models_dir: ./model/places10
