@@ -2,10 +2,10 @@ from omegaconf import OmegaConf
 
 from libai.config import get_config
 from libai.config import LazyCall
-from libai.data.build import build_image_train_loader, build_image_test_loader
+from libai.data.build import build_nlp_train_loader, build_nlp_test_loader
 
-from modeling.model import NeuralNetwork
-from dataset.dataset import MnistDataSet
+from modeling.model import BERT_Classifier
+from dataset.dataset import ExtractionDataSet
 from configs.graph import graph
 from configs.optim import optim
 from configs.train import train
@@ -15,44 +15,50 @@ from configs.train import train
 # train = get_config("./train.py").train
 
 dataloader = OmegaConf.create()
-dataloader.train = LazyCall(build_image_train_loader)(
+dataloader.train = LazyCall(build_nlp_train_loader)(
     dataset=[
-        LazyCall(MnistDataSet)(
-            path="/workspace/quickstart/data/",
+        LazyCall(ExtractionDataSet)(
+            data_path="/workspace/re",
+            vocab_path="bert-base-chinese",
+            # vocab_path="/workspace/re/bert-base-chinese/vocab.txt",
             is_train=True,
-            # indc=1600,
+            indc=1000,
         )
     ],
     num_workers=4,
 )
-dataloader.test = [LazyCall(build_image_test_loader)(
-    dataset=LazyCall(MnistDataSet)(
-        path="/workspace/quickstart/data/",
+dataloader.test = [LazyCall(build_nlp_test_loader)(
+    dataset=LazyCall(ExtractionDataSet)(
+        data_path="/workspace/re",
+        vocab_path="bert-base-chinese",
         is_train=False,
-        # indc=160,
+        indc=200,
     ),
     num_workers=4,
 )]
 
-# transformer_cfg = dict(
-#     vocab_size=9027,
-#     max_position_embeddings=64,
-#     hidden_size=512,
-#     intermediate_size=512,
-#     hidden_layers=6,
-#     num_attention_heads=8,
-#     embedding_dropout_prob=0.1,
-#     hidden_dropout_prob=0.1,
-#     attention_dropout_prob=0.1,
-#     initializer_range=0.02,
-#     layernorm_epsilon=1e-5,
-#     bias_gelu_fusion=False,
-#     bias_dropout_fusion=False,
-#     scale_mask_softmax_fusion=False,
-#     apply_query_key_layer_scaling=True,
-# )
-# model = LazyCall(Seq2Seq)(cfg=transformer_cfg)
-model = LazyCall(NeuralNetwork)()
+bert_cfg = dict(
+    vocab_size=21128,
+    hidden_size=512,
+    hidden_layers=6,
+    num_attention_heads=8,
+    intermediate_size=512,
+    hidden_dropout_prob=0.1,
+    attention_probs_dropout_prob=0.1,
+    max_position_embeddings=64,
+    num_tokentypes=2,
+    add_pooling_layer=True,
+    initializer_range=0.02,
+    layernorm_eps=1e-12,
+    bias_gelu_fusion=True,
+    bias_dropout_fusion=True,
+    scale_mask_softmax_fusion=True,
+    apply_query_key_layer_scaling=True,
+    apply_residual_post_layernorm=False,
+    amp_enabled=False,
+)
+
+model = LazyCall(BERT_Classifier)(cfg=bert_cfg)
 
 train.update(
     dict(
